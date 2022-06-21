@@ -60,7 +60,7 @@ func (mCfg *MongoConfig) GetCollection(client *mongo.Client, collectionName stri
 }
 
 func GetConnectionString() string {
-	err := godotenv.Load()
+	err := godotenv.Load(".env")
 
 	if err != nil {
 		log.Fatalln("error .env")

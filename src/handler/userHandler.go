@@ -2,14 +2,13 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
+	"reflect"
 	"ticketApp/src/service"
 	"ticketApp/src/type/entity"
 	"ticketApp/src/type/util"
-	"ticketApp/src/type/util/request"
-	"ticketApp/src/type/util/response"
 	"time"
 )
 
@@ -22,62 +21,83 @@ func NewUserHandler(userService service.UserService) handler {
 }
 
 func (h *handler) UserGetById(ctx echo.Context) error {
-	customEchoCtx := response.NewCustomEchoContext(&ctx)
-	id := ctx.Param("id")
+	id := ctx.QueryParam("id")
 	if id == "" {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", "Path variable not found.", http.StatusBadRequest, util.PATH_VARIABLE_NOT_FOUND_ERROR_CODE))
+		id = ctx.Param("id")
+	}
+	if id == "" {
+		return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "GET", "Path variable not found.", http.StatusBadRequest, 4008))
 	}
 
-	user, err := h.userService.UserServiceGetById(id)
-	if err != nil {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", err.Error(), http.StatusNotFound, util.USER_GET_BY_ID_ERROR_CODE))
+	if reflect.TypeOf(id) != reflect.TypeOf("string") {
+		return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "GET", "Path variable is not valid format.", http.StatusBadRequest, 4009))
 	}
 
-	if user == nil {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", "User not found.", http.StatusNotFound, util.USER_NOT_FOUND_ERROR_CODE))
+	user, errSrv := h.userService.UserServiceGetById(id)
+	if errSrv != nil || user == nil {
+		return ctx.JSON(http.StatusNotFound, *util.NewError("user handler", "GET", "User not found.", http.StatusNotFound, 4010))
 	}
 
-	return customEchoCtx.ReturnOkResponseWithBody(user)
+	return ctx.JSON(http.StatusOK, user)
 }
 
 func (h *handler) UserUpsert(ctx echo.Context) error {
-	customEchoCtx := response.NewCustomEchoContext(&ctx)
-	userPostRequestModel := request.UserPostRequestModel{}
+	userPostRequestModel := util.UserPostRequestModel{}
+
 	err := json.NewDecoder(ctx.Request().Body).Decode(&userPostRequestModel)
 	if err != nil {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", err.Error(), http.StatusBadRequest, util.USER_INVALID_POST_BODY_ERROR_CODE))
+		return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "UPSERT", err.Error(), http.StatusBadRequest, 4012))
 	}
-
-	empId := uuid.New().String()
 	user := entity.User{
-		BaseEntity: entity.BaseEntity{
-			Id:        empId,
-			CreatedAt: time.Now(),
-		},
-		Username: userPostRequestModel.Username,
-		Password: userPostRequestModel.Password,
-		Email:    userPostRequestModel.Email,
-		Type:     userPostRequestModel.Type,
-	}
-	res, err := h.userService.UserServiceInsert(user)
-	if err != nil {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", err.Error(), http.StatusBadRequest, util.USER_VALIDATION_ERROR_CODE))
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Username:  userPostRequestModel.Username,
+		Password:  userPostRequestModel.Password,
+		Email:     userPostRequestModel.Email,
+		Type:      userPostRequestModel.Type,
 	}
 
-	return customEchoCtx.ReturnCreatedResponseWithBody(res)
+	var empId string
+	id := ctx.QueryParam("id")
+	if id != "" {
+		if reflect.TypeOf(id) != reflect.TypeOf("string") {
+			return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "POST", "Provided identifier is not valid format.", http.StatusBadRequest, 4011))
+		}
+		empId = id
+
+		empIdStr, err := primitive.ObjectIDFromHex(empId)
+		if err != nil {
+			return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "POST", "Provided identifier is not valid format.", http.StatusBadRequest, 4012))
+		}
+		user.Id = &empIdStr
+	}
+
+	res, errSrv := h.userService.UserServiceInsert(user)
+	if errSrv != nil {
+		return ctx.JSON(errSrv.ErrorCode, *util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+	}
+	return ctx.JSON(http.StatusOK, res)
 }
 
 func (h *handler) UserDeleteById(ctx echo.Context) error {
-	customEchoCtx := response.NewCustomEchoContext(&ctx)
-	id := ctx.Param("id")
+	id := ctx.QueryParam("id")
 	if id == "" {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", "Path variable not found.", http.StatusBadRequest, util.PATH_VARIABLE_NOT_FOUND_ERROR_CODE))
+		id = ctx.Param("id")
+	}
+	if id == "" {
+		return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "DELETE", "Path variable not found.", http.StatusBadRequest, 4013))
 	}
 
-	res, err := h.userService.UserServiceDeleteById(id)
-	if err != nil {
-		return customEchoCtx.ReturnBadRequestResponse(*util.NewError("", "", err.Error(), http.StatusBadRequest, util.USER_DELETE_BY_ID_ERROR_CODE))
+	if reflect.TypeOf(id) != reflect.TypeOf("string") {
+		return ctx.JSON(http.StatusBadRequest, *util.NewError("user handler", "GET", "Path variable is not valid format.", http.StatusBadRequest, 4014))
 	}
 
-	return customEchoCtx.ReturnOkResponseWithBody(res)
+	res, errSrv := h.userService.UserServiceDeleteById(id)
+	if errSrv != nil {
+		return ctx.JSON(errSrv.ErrorCode, *util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+	}
+
+	return ctx.JSON(http.StatusOK, util.UserDeleteResponseType{
+		IsSuccess: res,
+	})
 }

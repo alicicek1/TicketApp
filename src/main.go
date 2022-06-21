@@ -8,7 +8,12 @@ import (
 	"ticketApp/src/handler"
 	"ticketApp/src/repository"
 	"ticketApp/src/service"
+	"ticketApp/src/type/util"
 )
+
+func init() {
+
+}
 
 func main() {
 	mCfg := config.NewMongoConfig()
@@ -19,14 +24,18 @@ func main() {
 	defer cancel()
 
 	e := echo.New()
+	e.HTTPErrorHandler = util.NewHttpErrorHandler(util.NewErrorStatusCodeMaps()).Handler
+
 	userRepository := repository.NewUserRepository(collection)
 	userService := service.NewUserService(userRepository)
 	userHandler := handler.NewUserHandler(userService)
 
 	userGroup := e.Group("/api/users")
+	userGroup.GET("", userHandler.UserGetById)
 	userGroup.GET("/:id", userHandler.UserGetById)
 	userGroup.POST("", userHandler.UserUpsert)
-	userGroup.DELETE("/:id", userHandler.UserDeleteById)
+	userGroup.DELETE("", userHandler.UserDeleteById)
 
 	log.Fatal(e.Start(":8083"))
+
 }
