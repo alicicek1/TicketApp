@@ -30,13 +30,29 @@ func (e *Error) ModifyDescription(desc string) *Error {
 }
 
 func (e *Error) ModifyErrorCode(code int) *Error {
-	e.StatusCode = code
+	e.ErrorCode = code
+	return e
+}
+
+func (e *Error) ModifyApplicationName(application string) *Error {
+	e.ApplicationName = application
+	return e
+}
+
+func (e *Error) ModifyOperation(operation string) *Error {
+	e.Operation = operation
 	return e
 }
 
 var (
-	UnKnownError = NewError("-", "-", "An unknown error occurred.", 1, -1)
-	NotFound     = NewError("-", "GET", "Not found.", http.StatusNotFound, -1)
+	UnKnownError           = NewError("-", "-", "An unknown error occurred.", 1, -1)
+	PathVariableNotFound   = NewError("", "GET", "Path variable not found.", http.StatusBadRequest, -1)
+	PathVariableIsNotValid = NewError("", "GET", "Path variable is not valid format.", http.StatusBadRequest, -1)
+	NotFound               = NewError("", "GET", "Not found.", http.StatusNotFound, -1)
+	InvalidBody            = NewError("", "UPSERT", "Request body is not valid.", http.StatusBadRequest, -1)
+	UpsertFailed           = NewError("", "UPSERT", "Upsert failed.", http.StatusBadRequest, -1)
+	PostValidation         = NewError("", "POST", "", http.StatusBadRequest, -1)
+	DeleteFailed           = NewError("", "DELETE", "failed delete", http.StatusBadRequest, -1)
 )
 
 type (

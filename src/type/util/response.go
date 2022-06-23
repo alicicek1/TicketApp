@@ -1,5 +1,5 @@
 package util
 
-type UserDeleteResponseType struct {
+type DeleteResponseType struct {
 	IsSuccess bool `json:"isSuccess"`
 }
