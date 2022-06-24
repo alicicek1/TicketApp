@@ -5,7 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
 	"ticketApp/src/type/entity"
 	"ticketApp/src/type/util"
 	"time"
@@ -64,7 +63,7 @@ func (t TicketRepositoryType) TicketRepositoryGetAll(filter util.Filter) (*entit
 
 	totalCount, err := t.TicketCollection.CountDocuments(ctx, filter.Filters)
 	if err != nil {
-		return nil, util.NewError("ticket repository", "count get", err.Error(), http.StatusBadRequest, 3001)
+		return nil, util.CountGet.ModifyApplicationName("ticket repository").ModifyDescription(err.Error()).ModifyErrorCode(3001)
 	}
 	opts := options.Find().SetSkip(filter.Page).SetLimit(filter.PageSize)
 	if filter.SortingField != "" && filter.SortingDirection != 0 {

@@ -5,7 +5,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"net/http"
 	"ticketApp/src/type/entity"
 	"ticketApp/src/type/util"
 	"time"
@@ -36,6 +35,7 @@ func (c CategoryRepositoryType) CategoryRepoInsert(category entity.Category) (*e
 	}
 	return &entity.CategoryPostResponseModel{Id: category.Id}, nil
 }
+
 func (c CategoryRepositoryType) CategoryRepoGetById(id string) (*entity.Category, *util.Error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -64,7 +64,7 @@ func (c CategoryRepositoryType) CategoryRepositoryGetAll(filter util.Filter) (*e
 
 	totalCount, err := c.CategoryCollection.CountDocuments(ctx, filter.Filters)
 	if err != nil {
-		return nil, util.NewError("category repository", "count get", err.Error(), http.StatusBadRequest, 3000)
+		return nil, util.CountGet.ModifyApplicationName("category repository").ModifyDescription(err.Error()).ModifyErrorCode(3000)
 	}
 	opts := options.Find().SetSkip(filter.Page).SetLimit(filter.PageSize)
 	if filter.SortingField != "" && filter.SortingDirection != 0 {

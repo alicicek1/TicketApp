@@ -53,6 +53,7 @@ var (
 	UpsertFailed           = NewError("", "UPSERT", "Upsert failed.", http.StatusBadRequest, -1)
 	PostValidation         = NewError("", "POST", "", http.StatusBadRequest, -1)
 	DeleteFailed           = NewError("", "DELETE", "failed delete", http.StatusBadRequest, -1)
+	CountGet               = NewError("", "GET", "count get failed", http.StatusBadRequest, -1)
 )
 
 type (

@@ -57,7 +57,7 @@ func (h *UserHandler) UserUpsert(ctx echo.Context) error {
 	id := ctx.QueryParam("id")
 	if id != "" {
 		if util.IsValidUUID(id) {
-			return ctx.JSON(http.StatusBadRequest, util.NewError("user handler", "POST", "Provided identifier is not valid format.", http.StatusBadRequest, 4011))
+			return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("user handler").ModifyOperation("POST").ModifyErrorCode(4011))
 		}
 		user.Id = id
 	}
@@ -80,7 +80,7 @@ func (h *UserHandler) UserDeleteById(ctx echo.Context) error {
 
 	res, errSrv := h.userService.UserServiceDeleteById(id)
 	if errSrv != nil {
-		return ctx.JSON(errSrv.ErrorCode, util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+		return ctx.JSON(errSrv.ErrorCode, errSrv)
 	}
 
 	return ctx.JSON(http.StatusOK, res)
@@ -136,4 +136,18 @@ func (h *UserHandler) UserGetAll(ctx echo.Context) error {
 	}
 	ctx.Response().Header().Add("x-total-count", strconv.FormatInt(res.RowCount, 10))
 	return ctx.JSON(http.StatusOK, res)
+}
+
+// HealthCheck godoc
+// @Summary Show the status of server.
+// @Description get the status of server.
+// @Tags root
+// @Accept */*
+// @Produce json
+// @Success 200 {object} map[string]interface{}
+// @Router / [get]
+func (h *UserHandler) HealthCheck(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"data": "Server is up and running",
+	})
 }

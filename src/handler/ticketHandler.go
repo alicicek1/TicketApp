@@ -60,7 +60,7 @@ func (h *TicketHandler) TicketInsert(ctx echo.Context) error {
 
 	res, errSrv := h.ticketService.TicketServiceInsert(category)
 	if errSrv != nil {
-		return ctx.JSON(errSrv.ErrorCode, util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+		return ctx.JSON(errSrv.ErrorCode, errSrv)
 	}
 	return ctx.JSON(http.StatusOK, res)
 }
@@ -76,7 +76,7 @@ func (h *TicketHandler) TicketDeleteById(ctx echo.Context) error {
 
 	res, errSrv := h.ticketService.TicketServiceDeleteById(id)
 	if errSrv != nil {
-		return ctx.JSON(errSrv.ErrorCode, util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+		return ctx.JSON(errSrv.ErrorCode, errSrv)
 	}
 
 	return ctx.JSON(http.StatusOK, res)

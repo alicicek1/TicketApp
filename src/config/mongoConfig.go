@@ -31,7 +31,6 @@ func NewMongoConfig() AppConfig {
 }
 
 func (mCfg *AppConfig) CloseConnection(client *mongo.Client, ctx context.Context, cancel context.CancelFunc) {
-
 	defer cancel()
 
 	defer func() {

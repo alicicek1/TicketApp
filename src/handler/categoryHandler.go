@@ -53,7 +53,7 @@ func (h *CategoryHandler) CategoryInsert(ctx echo.Context) error {
 
 	res, errSrv := h.categoryService.CategoryServiceInsert(category)
 	if errSrv != nil {
-		return ctx.JSON(errSrv.ErrorCode, util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+		return ctx.JSON(errSrv.ErrorCode, errSrv)
 	}
 	return ctx.JSON(http.StatusOK, res)
 }
@@ -69,7 +69,7 @@ func (h *CategoryHandler) CategoryDeleteById(ctx echo.Context) error {
 
 	res, errSrv := h.categoryService.CategoryServiceDeleteById(id)
 	if errSrv != nil {
-		return ctx.JSON(errSrv.ErrorCode, util.NewError(errSrv.ApplicationName, errSrv.Operation, errSrv.Description, errSrv.ErrorCode, errSrv.StatusCode))
+		return ctx.JSON(errSrv.ErrorCode, errSrv)
 	}
 
 	return ctx.JSON(http.StatusOK, res)
