@@ -18,6 +18,6 @@ type CategoryPostResponseModel struct {
 }
 
 type CategoryGetResponseModel struct {
-	RowCount   int64 `json:"rowCount"`
-	Categories []Category
+	RowCount   int64      `json:"rowCount"`
+	Categories []Category `json:"categories"`
 }

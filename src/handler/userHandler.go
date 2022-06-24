@@ -3,6 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"github.com/labstack/echo/v4"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
 	"strconv"
 	"ticketApp/src/config"
@@ -93,7 +95,36 @@ func (h *UserHandler) UserGetAll(ctx echo.Context) error {
 	filter.SortingField = sortingField
 	filter.SortingDirection = sortingDirection
 
-	filters := ctx.QueryParam("filters")
+	filters := map[string]interface{}{}
+	if username := ctx.QueryParam("username"); username != "" && len(username) < 30 {
+		filters["username"] = bson.M{"$regex": primitive.Regex{
+			Pattern: username,
+			Options: "i",
+		}}
+	}
+
+	if mingAgeStr := ctx.QueryParam("minAge"); mingAgeStr != "" {
+		if minAge, err := strconv.Atoi(mingAgeStr); err == nil {
+			filters["age"] = bson.M{"$gte": minAge}
+		}
+	}
+
+	if maxAgeStr := ctx.QueryParam("maxAge"); maxAgeStr != "" {
+		if maxAge, err := strconv.Atoi(maxAgeStr); err == nil {
+			minFilter, exist := filters["age"]
+			if exist {
+				delete(filters, "age")
+				filters["$and"] = bson.A{
+					bson.M{"age": minFilter},
+					bson.M{"age": bson.M{"$lte": maxAge}},
+				}
+			} else {
+				filters["age"] = bson.M{"$lte": maxAge}
+			}
+		}
+	}
+
+	filter.Filters = filters
 
 	res, err := h.userService.UserServiceGetAll(filter)
 	if err != nil {

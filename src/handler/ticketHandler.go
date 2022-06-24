@@ -92,6 +92,7 @@ func (h *TicketHandler) TicketGetAll(ctx echo.Context) error {
 	filter.SortingDirection = sortingDirection
 
 	filters := ctx.QueryParam("filters")
+	filter.Filters = util.CreateFilter(entity.Ticket{}, filters)
 
 	tickets, err := h.ticketService.TicketServiceGetAll(filter)
 	if err != nil {

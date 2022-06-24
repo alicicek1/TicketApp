@@ -3,6 +3,9 @@ package util
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
 	"regexp"
 	"strconv"
@@ -84,4 +87,60 @@ func ValidateSortingFilters(entity any, sortingArea, SortingDirection string) (s
 	}
 
 	return sort, direction
+}
+
+func CreateEqualFilter(value, field string) map[string]interface{} {
+	return map[string]interface{}{
+		field: bson.M{"$regex": primitive.Regex{
+			Pattern: value,
+			Options: "i",
+		}},
+	}
+}
+
+var operators []string = []string{"<=", ">=", "==", "||"}
+
+func CreateFilter(model any, filters string) map[string]interface{} {
+	responseFilter := map[string]interface{}{}
+	v := reflect.ValueOf(model)
+	typeOfS := v.Type()
+
+	filterArr := strings.Split(filters, ",")
+	for _, filter := range filterArr {
+		for i := 0; i <= len(operators); i++ {
+			if strings.Contains(filter, operators[i]) {
+				splittedCurrentFilter := strings.Split(filter, operators[i])
+				field := splittedCurrentFilter[0]
+				value := splittedCurrentFilter[len(splittedCurrentFilter)-1]
+				for j := 0; j < v.NumField(); j++ {
+					if field == typeOfS.Field(j).Name {
+						if strings.Contains(filter, ">=") {
+							responseFilter[field] = bson.M{"$gte": value}
+							break
+						} else if strings.Contains(filter, "<=") {
+							if prevFilter, exist := responseFilter[field]; !exist {
+								responseFilter[field] = bson.M{"$lte": value}
+							} else {
+								fmt.Println(prevFilter)
+								responseFilter["$and"] = bson.A{
+									bson.M{field: value},
+									prevFilter,
+								}
+							}
+							break
+						} else if strings.Contains(filter, "==") {
+							responseFilter[field] = bson.M{"$regex": primitive.Regex{
+								Pattern: value,
+								Options: "i",
+							}}
+							break
+						} else if strings.Contains(filter, "||") {
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+	return nil
 }

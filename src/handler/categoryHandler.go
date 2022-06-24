@@ -84,15 +84,18 @@ func (h *CategoryHandler) CategoryGetAll(ctx echo.Context) error {
 	filter.SortingField = sortingField
 	filter.SortingDirection = sortingDirection
 
-	filters := ctx.QueryParam("filters")
+	nameValue := ctx.QueryParam("name")
+	if nameValue != "" {
+		filter.Filters["name"] = util.CreateEqualFilter(nameValue, "name")
+	}
 
-	cateroies, errSrv := h.categoryService.CategoryServiceGetAll(filter)
+	categories, errSrv := h.categoryService.CategoryServiceGetAll(filter)
 	if errSrv != nil {
 		return ctx.JSON(errSrv.StatusCode, errSrv)
 	}
 
-	if cateroies == nil {
+	if categories == nil {
 		return ctx.JSON(http.StatusNotFound, util.NotFound.ModifyApplicationName("category handler").ModifyErrorCode(5000))
 	}
-	return ctx.JSON(http.StatusOK, cateroies)
+	return ctx.JSON(http.StatusOK, categories)
 }
