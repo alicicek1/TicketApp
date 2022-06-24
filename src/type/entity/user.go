@@ -48,3 +48,14 @@ type UserGetResponseModel struct {
 	RowCount int64  `json:"rowCount"`
 	Users    []User `json:"users"`
 }
+
+type LoginRequestModel struct {
+	Username string  `json:"username"`
+	Password *string `json:"password"`
+}
+
+type LoginResponseModel struct {
+	IsSuccessful bool      `json:"isSuccessful"`
+	Token        string    `json:"token"`
+	ExpiresDate  time.Time `json:"-"`
+}

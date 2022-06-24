@@ -27,7 +27,7 @@ func (h *TicketHandler) TicketGetById(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableNotFound.ModifyApplicationName("ticket handler").ModifyErrorCode(4018))
 	}
 
-	if util.IsValidUUID(id) {
+	if !util.IsValidUUID(id) {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("ticket handler").ModifyErrorCode(4019))
 	}
 
@@ -70,7 +70,7 @@ func (h *TicketHandler) TicketDeleteById(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableNotFound.ModifyApplicationName("user handler").ModifyErrorCode(4020))
 	}
 
-	if util.IsValidUUID(id) {
+	if !util.IsValidUUID(id) {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("user handler").ModifyErrorCode(4021))
 	}
 
@@ -91,8 +91,7 @@ func (h *TicketHandler) TicketGetAll(ctx echo.Context) error {
 	filter.SortingField = sortingField
 	filter.SortingDirection = sortingDirection
 
-	filters := ctx.QueryParam("filters")
-	filter.Filters = util.CreateFilter(entity.Ticket{}, filters)
+	//filtering
 
 	tickets, err := h.ticketService.TicketServiceGetAll(filter)
 	if err != nil {

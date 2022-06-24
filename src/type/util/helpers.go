@@ -4,13 +4,15 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"github.com/golang-jwt/jwt"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 	"ticketApp/src/type/entity"
+	"time"
 )
 
 func CheckCategoryModel(category entity.Category) (bool, *Error) {
@@ -44,9 +46,11 @@ func GetMD5Hash(text string) string {
 	return hashStr
 }
 
-func IsValidUUID(u string) bool {
-	r := regexp.MustCompile("`^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[8|9|aA|bB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$`gm")
-	return r.MatchString(u)
+func IsValidUUID(uuidStr string) bool {
+	if _, err := uuid.Parse(uuidStr); err != nil {
+		return false
+	}
+	return true
 }
 
 func ValidatePaginationFilters(page, pageSize string, maxLimit int) (int64, int64) {
@@ -89,13 +93,11 @@ func ValidateSortingFilters(entity any, sortingArea, SortingDirection string) (s
 	return sort, direction
 }
 
-func CreateEqualFilter(value, field string) map[string]interface{} {
-	return map[string]interface{}{
-		field: bson.M{"$regex": primitive.Regex{
-			Pattern: value,
-			Options: "i",
-		}},
-	}
+func CreateEqualFilter(value, field string) interface{} {
+	return bson.M{"$regex": primitive.Regex{
+		Pattern: value,
+		Options: "i",
+	}}
 }
 
 var operators []string = []string{"<=", ">=", "==", "||"}
@@ -143,4 +145,36 @@ func CreateFilter(model any, filters string) map[string]interface{} {
 		}
 	}
 	return nil
+}
+
+var jwtKey = []byte("my_secret_key")
+
+type Claims struct {
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
+func CreateToken(model entity.LoginRequestModel) (*entity.LoginResponseModel, error) {
+	response := entity.LoginResponseModel{}
+
+	expirationDate := time.Now().Add(time.Minute * 5)
+	response.ExpiresDate = expirationDate
+
+	claims := &Claims{
+		Username: model.Username,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: expirationDate.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenStr, err := token.SignedString(jwtKey)
+	if err != nil {
+		return nil, err
+	}
+
+	response.IsSuccessful = true
+	response.Token = tokenStr
+	return &response, nil
 }

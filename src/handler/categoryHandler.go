@@ -29,7 +29,7 @@ func (h *CategoryHandler) CategoryGetById(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableNotFound.ModifyApplicationName("category handler").ModifyErrorCode(4016))
 	}
 
-	if util.IsValidUUID(id) {
+	if !util.IsValidUUID(id) {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("category handler").ModifyErrorCode(4017))
 	}
 
@@ -63,7 +63,7 @@ func (h *CategoryHandler) CategoryDeleteById(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableNotFound.ModifyApplicationName("user handler").ModifyErrorCode(4013))
 	}
 
-	if util.IsValidUUID(id) {
+	if !util.IsValidUUID(id) {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("user handler").ModifyErrorCode(4014))
 	}
 
@@ -85,6 +85,7 @@ func (h *CategoryHandler) CategoryGetAll(ctx echo.Context) error {
 	filter.SortingDirection = sortingDirection
 
 	nameValue := ctx.QueryParam("name")
+	filter.Filters = map[string]interface{}{}
 	if nameValue != "" {
 		filter.Filters["name"] = util.CreateEqualFilter(nameValue, "name")
 	}

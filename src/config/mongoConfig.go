@@ -24,7 +24,16 @@ type AppConfig struct {
 	MaxPageLimit    int
 }
 
-var EnvConfig = map[string]AppConfig{}
+var EnvConfig = map[string]AppConfig{"qe": {
+	Env:             "",
+	MongoClientUri:  "",
+	DBName:          "",
+	UserColName:     "",
+	TicketColName:   "",
+	CategoryColName: "",
+	MongoDuration:   0,
+	MaxPageLimit:    0,
+}}
 
 func NewMongoConfig() AppConfig {
 	return AppConfig{}

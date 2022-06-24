@@ -2,6 +2,7 @@ package service
 
 import (
 	"github.com/google/uuid"
+	"net/http"
 	"ticketApp/src/repository"
 	"ticketApp/src/type/entity"
 	"ticketApp/src/type/util"
@@ -21,6 +22,7 @@ type UserService interface {
 	UserServiceGetById(id string) (*entity.User, *util.Error)
 	UserServiceDeleteById(id string) (util.DeleteResponseType, *util.Error)
 	UserServiceGetAll(filter util.Filter) (*entity.UserGetResponseModel, *util.Error)
+	UserServiceLogin(loginRequestModel entity.LoginRequestModel) (*entity.LoginResponseModel, *util.Error)
 }
 
 func (u UserServiceType) UserServiceInsert(user entity.User) (*entity.UserPostResponseModel, *util.Error) {
@@ -66,4 +68,18 @@ func (u UserServiceType) UserServiceGetAll(filter util.Filter) (*entity.UserGetR
 		return nil, err
 	}
 	return result, nil
+}
+func (u UserServiceType) UserServiceLogin(loginRequestModel entity.LoginRequestModel) (*entity.LoginResponseModel, *util.Error) {
+	*loginRequestModel.Password = util.GetMD5Hash(*loginRequestModel.Password)
+	result, err := u.UserRepository.UserRepositoryFindByUsernameAndPassword(loginRequestModel)
+	if err != nil || result == nil {
+		return nil, err
+	}
+
+	res, errTkn := util.CreateToken(loginRequestModel)
+	if errTkn != nil {
+		return nil, util.NewError("user service", "TOKEN CREATE", errTkn.Error(), http.StatusBadRequest, 5003)
+	}
+
+	return res, nil
 }

@@ -35,7 +35,6 @@ func (c CategoryRepositoryType) CategoryRepoInsert(category entity.Category) (*e
 	}
 	return &entity.CategoryPostResponseModel{Id: category.Id}, nil
 }
-
 func (c CategoryRepositoryType) CategoryRepoGetById(id string) (*entity.Category, *util.Error) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()

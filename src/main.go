@@ -31,6 +31,7 @@ func main() {
 	userGroup.GET("/:id", userHandler.UserGetById)
 	userGroup.GET("", userHandler.UserGetAll)
 	userGroup.POST("", userHandler.UserUpsert)
+	userGroup.POST("/login", userHandler.Login)
 	userGroup.DELETE("/:id", userHandler.UserDeleteById)
 
 	categoryCollection := mCfg.GetCollection(client, cfg.CategoryColName)

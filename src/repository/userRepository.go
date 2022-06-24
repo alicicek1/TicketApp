@@ -5,6 +5,8 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http"
+	"strings"
 	"ticketApp/src/type/entity"
 	"ticketApp/src/type/util"
 	"time"
@@ -23,6 +25,7 @@ type UserRepository interface {
 	UserRepoGetById(id string) (*entity.User, *util.Error)
 	UserRepoDeleteById(id string) (util.DeleteResponseType, *util.Error)
 	UserRepositoryGetAll(filter util.Filter) (*entity.UserGetResponseModel, *util.Error)
+	UserRepositoryFindByUsernameAndPassword(model entity.LoginRequestModel) (*entity.User, *util.Error)
 }
 
 func (u UserRepositoryType) UserRepoInsert(user entity.User) (*entity.UserPostResponseModel, *util.Error) {
@@ -75,15 +78,30 @@ func (u UserRepositoryType) UserRepositoryGetAll(filter util.Filter) (*entity.Us
 
 	cur, err := u.UserCollection.Find(ctx, filter.Filters, opts)
 	if err != nil {
-
+		return nil, util.UnKnownError.ModifyApplicationName("user repository").ModifyOperation("GET").ModifyDescription(err.Error()).ModifyErrorCode(4044)
 	}
 	var users []entity.User
 	err = cur.All(ctx, &users)
 	if err != nil {
-
+		return nil, util.UnKnownError.ModifyApplicationName("user repository").ModifyOperation("GET").ModifyDescription(err.Error()).ModifyErrorCode(4045)
 	}
 	return &entity.UserGetResponseModel{
 		RowCount: totalCount,
 		Users:    users,
 	}, nil
+}
+func (u UserRepositoryType) UserRepositoryFindByUsernameAndPassword(model entity.LoginRequestModel) (*entity.User, *util.Error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	var user entity.User
+	filter := map[string]interface{}{}
+	filter["$and"] = bson.A{
+		bson.M{"username": model.Username},
+		bson.M{"password": strings.ToLower(*model.Password)},
+	}
+	if err := u.UserCollection.FindOne(ctx, filter).Decode(&user); err != nil {
+		return nil, util.NewError("user repository", "LOGIN", "There is no user with provided information.", http.StatusNotFound, 4056)
+	}
+	return &user, nil
 }

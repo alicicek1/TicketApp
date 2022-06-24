@@ -6,6 +6,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"net/http"
+	"reflect"
 	"strconv"
 	"ticketApp/src/config"
 	"ticketApp/src/service"
@@ -56,7 +57,7 @@ func (h *UserHandler) UserUpsert(ctx echo.Context) error {
 
 	id := ctx.QueryParam("id")
 	if id != "" {
-		if util.IsValidUUID(id) {
+		if !util.IsValidUUID(id) {
 			return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("user handler").ModifyOperation("POST").ModifyErrorCode(4011))
 		}
 		user.Id = id
@@ -74,7 +75,7 @@ func (h *UserHandler) UserDeleteById(ctx echo.Context) error {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableNotFound.ModifyApplicationName("user handler").ModifyErrorCode(4013))
 	}
 
-	if util.IsValidUUID(id) {
+	if !util.IsValidUUID(id) {
 		return ctx.JSON(http.StatusBadRequest, util.PathVariableIsNotValid.ModifyApplicationName("user handler").ModifyErrorCode(4014))
 	}
 
@@ -137,17 +138,28 @@ func (h *UserHandler) UserGetAll(ctx echo.Context) error {
 	ctx.Response().Header().Add("x-total-count", strconv.FormatInt(res.RowCount, 10))
 	return ctx.JSON(http.StatusOK, res)
 }
+func (h *UserHandler) Login(ctx echo.Context) error {
+	loginRequestModel := entity.LoginRequestModel{}
 
-// HealthCheck godoc
-// @Summary Show the status of server.
-// @Description get the status of server.
-// @Tags root
-// @Accept */*
-// @Produce json
-// @Success 200 {object} map[string]interface{}
-// @Router / [get]
-func (h *UserHandler) HealthCheck(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"data": "Server is up and running",
+	err := json.NewDecoder(ctx.Request().Body).Decode(&loginRequestModel)
+	if err != nil {
+		return ctx.JSON(http.StatusBadRequest, util.InvalidBody.ModifyApplicationName("user handler").ModifyErrorCode(4054).ModifyOperation("LOGIN"))
+	}
+
+	if loginRequestModel.Username == "" || *loginRequestModel.Password == "" {
+		return ctx.JSON(http.StatusBadRequest, util.InvalidBody.ModifyApplicationName("user handler").ModifyErrorCode(4055).ModifyOperation("LOGIN"))
+	}
+
+	result, errSrv := h.userService.UserServiceLogin(loginRequestModel)
+	if errSrv != nil {
+		return ctx.JSON(errSrv.StatusCode, errSrv)
+	}
+
+	ctx.Response().Header().Add("Token", result.Token)
+	ctx.SetCookie(&http.Cookie{
+		Name:    reflect.TypeOf(result.Token).Name(),
+		Value:   result.Token,
+		Expires: result.ExpiresDate,
 	})
+	return ctx.JSON(http.StatusCreated, result)
 }
