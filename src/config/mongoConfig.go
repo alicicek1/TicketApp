@@ -9,7 +9,6 @@ import (
 	"golang.org/x/net/context"
 	"log"
 	"os"
-	"strconv"
 	"time"
 )
 
@@ -24,16 +23,28 @@ type AppConfig struct {
 	MaxPageLimit    int
 }
 
-var EnvConfig = map[string]AppConfig{"qe": {
-	Env:             "",
-	MongoClientUri:  "",
-	DBName:          "",
-	UserColName:     "",
-	TicketColName:   "",
-	CategoryColName: "",
-	MongoDuration:   0,
-	MaxPageLimit:    0,
-}}
+var EnvConfig = map[string]AppConfig{
+	"qa": {
+		Env:             "qa",
+		MongoClientUri:  "mongodb+srv://admin:1@cluster0.ymrmq.mongodb.net/?retryWrites=true&w=majority",
+		DBName:          "TicketApp",
+		UserColName:     "USer",
+		TicketColName:   "Ticket",
+		CategoryColName: "Category",
+		MongoDuration:   5,
+		MaxPageLimit:    100,
+	},
+	"prod": {
+		Env:             "qa",
+		MongoClientUri:  "mongodb+srv://admin:1@cluster0.ymrmq.mongodb.net/?retryWrites=true&w=majority",
+		DBName:          "TicketApp",
+		UserColName:     "USer",
+		TicketColName:   "Ticket",
+		CategoryColName: "Category",
+		MongoDuration:   5,
+		MaxPageLimit:    100,
+	},
+}
 
 func NewMongoConfig() AppConfig {
 	return AppConfig{}
@@ -87,27 +98,19 @@ func GetConfigModel() AppConfig {
 	err = godotenv.Load(wd + "/src/.env")
 
 	if err != nil {
-		panic("ConnectionString not found.")
+		panic("Env was not found.")
 		log.Fatalln("error .env")
 	}
 
 	env := os.Getenv("Env")
-	mongoDuration, err := strconv.ParseInt(os.Getenv("MongoDuration"), 10, 16)
-	mongoClientUri := os.Getenv("MongoClientUri")
-	dbName := os.Getenv("DbName")
-	maxPageLimit, err := strconv.Atoi(os.Getenv("MaxPageLimit"))
-	userColName := os.Getenv("UserColName")
-	ticketColName := os.Getenv("TicketColName")
-	categoryColName := os.Getenv("CategoryColName")
-
-	return AppConfig{
-		Env:             env,
-		MongoClientUri:  mongoClientUri,
-		DBName:          dbName,
-		UserColName:     userColName,
-		TicketColName:   ticketColName,
-		CategoryColName: categoryColName,
-		MongoDuration:   int16(mongoDuration),
-		MaxPageLimit:    maxPageLimit,
+	if env == "" {
+		panic("Env was not found.")
 	}
+
+	model, exist := EnvConfig[env]
+	if !exist {
+		panic("There is no model with provided environment.")
+	}
+
+	return model
 }

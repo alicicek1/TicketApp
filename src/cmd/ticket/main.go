@@ -9,8 +9,12 @@ import (
 	"ticketApp/src/service"
 )
 
-func init() {
+func zeroVal(i int) {
+	i = 0
+}
 
+func zeroPtr(i *int) {
+	*i = 0
 }
 
 func main() {
@@ -20,18 +24,6 @@ func main() {
 
 	e := echo.New()
 	//e.HTTPErrorHandler = util.NewHttpErrorHandler(util.NewErrorStatusCodeMaps()).Handler
-
-	userCollection := mCfg.GetCollection(client, cfg.UserColName)
-	userRepository := repository.NewUserRepository(userCollection)
-	userService := service.NewUserService(userRepository)
-	userHandler := handler.NewUserHandler(userService, cfg)
-	userGroup := e.Group("/api/users")
-	//userGroup.GET("", userHandler.UserGetById)
-	userGroup.GET("/:id", userHandler.UserGetById)
-	userGroup.GET("", userHandler.UserGetAll)
-	userGroup.POST("", userHandler.UserUpsert)
-	userGroup.POST("/login", userHandler.Login)
-	userGroup.DELETE("/:id", userHandler.UserDeleteById)
 
 	categoryCollection := mCfg.GetCollection(client, cfg.CategoryColName)
 	categoryRepository := repository.NewCategoryRepository(categoryCollection)
@@ -54,5 +46,4 @@ func main() {
 	ticketGroup.DELETE("/:id", ticketHandler.TicketDeleteById)
 
 	log.Fatal(e.Start(":8083"))
-
 }
